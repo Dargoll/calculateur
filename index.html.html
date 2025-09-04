@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculateur de points de mutation UNSA Police</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: Calibri, Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    background-color: #f9f9f9;
+  }
+  .table-responsive {
+    overflow-x: auto;
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+  }
+  colgroup col:first-child { width: 50%; }
+  colgroup col:not(:first-child) { width: calc(50% / 3); }
+  tbody tr td {
+    padding: 0;
+    vertical-align: middle;
+  }
+  /* ---- Style des sections ---- */
+  .section-header.padded td {
+    padding-top: 30px;
+    padding-bottom: 12px;
+  }
+  .section-number-block { display: flex; align-items: center; }
+  .section-number {
+    background-color: #00bfff;
+    color: #fff;
+    width: 40px;
+    text-align: center;
+    font-weight: bold;
+    padding: 6px 0;
+    border-radius: 5px 0 0 5px;
+  }
+  .section-title {
+    background-color: #223962;
+    color: #fff;
+    padding: 6px 10px;
+    flex: 1;
+    border-radius: 0 5px 5px 0;
+  }
+  /* ---- Style des boîtes et cellules ---- */
+  .sub-item td:not(:last-child) {
+      padding-right: 6px;
+  }
+  .sub-item:focus-within {
+    background-color: rgba(0, 191, 255, 0.05);
+  }
+  .input-cell input, .input-cell select, .result-cell span, .detail-cell, .text-highlight {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 11pt;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    transition: all 0.2s ease-in-out;
+  }
+  .input-cell input:focus, .input-cell select:focus {
+      border-color: #00bfff;
+      box-shadow: 0 2px 6px rgba(0, 191, 255, 0.2);
+  }
+  .input-cell input, .input-cell select {
+    background-color: #fff;
+    text-align: center;
+  }
+  .input-cell select {
+      text-align-last: center;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.4-5.4-13z%22%2F%3E%3C%2Fsvg%3E');
+      background-repeat: no-repeat;
+      background-position: right .7em top 50%;
+      background-size: .65em auto;
+      padding-right: 1.5em;
+  }
+  .result-cell span {
+    background-color: #90ee90;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  .detail-cell {
+    background-color: #f0f0f0;
+    border-color: #e0e0e0;
+  }
+  .text-highlight {
+    background-color: #00bfff;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+  }
+  /* Styles pour les lignes spéciales */
+  .cimm-highlight {
+      background-color: #ffc107;
+      color: #000;
+  }
+  .conjoint-highlight {
+      background-color: #ffc107;
+      color: #000;
+  }
+  .formateur-highlight {
+      background-color: #ffc107;
+      color: #000;
+  }
+  /* ---- Cases à cocher ---- */
+  .checkbox-container {
+    background-color: #fff;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 5px;
+    border: 1px solid #e5e5e5;
+    border-left: 4px solid #00bfff;
+  }
+  .checkbox-container h3 {
+    margin: 0 0 15px 0;
+    color: #223962;
+    font-size: 1.1em;
+  }
+  .checkbox-item {
+    display: inline-block;
+    margin: 5px 15px 5px 0;
+  }
+  .checkbox-item input[type="checkbox"] {
+    margin-right: 8px;
+    transform: scale(1.2);
+  }
+  .checkbox-item label {
+    font-weight: bold;
+    cursor: pointer;
+  }
+  /* ---- Lignes conditionnelles ---- */
+  .conditional-row {
+    display: none;
+  }
+  .conditional-row.show {
+    display: table-row;
+  }
+  /* ---- Sections d'explication et de total ---- */
+  .explanation td { padding: 8px 0; }
+  .explanation-content {
+      background-color: #fff;
+      padding: 10px 15px;
+      font-style: italic;
+      font-size: 10pt;
+      border: 1px solid #e5e5e5;
+      border-left: 4px solid #00bfff;
+      width: 50%;
+      box-sizing: border-box;
+      margin-left: 0;
+      margin-right: auto;
+      text-align: left;
+  }
+  .total-breakdown-container {
+      padding: 15px;
+      background-color: #fff;
+      border-radius: 5px;
+      margin-top: 10px;
+      border: 1px solid #e5e5e5;
+  }
+  .total-breakdown-container h4 { margin: 0 0 10px 0; color: #223962; }
+  .total-breakdown-container p { margin: 4px 0; font-size: 10pt; }
+  .total-row { border-top: 2px solid #223962; }
+  .total-row td {
+    font-weight: bold;
+    font-size: 1.2em;
+    padding-top: 15px;
+  }
+  .total-row .result-cell span {
+    background-color: #223962;
+    color: white;
+    height: 40px;
+  }
+  /* ---- Bouton Réinitialiser ---- */
+  .reset-button {
+      padding: 10px 20px;
+      font-size: 11pt;
+      font-weight: bold;
+      color: #fff;
+      background-color: #ff6347;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .reset-button:hover {
+      background-color: #e55337;
+  }
+  /* ---- Styles pour mobile ---- */
+  @media (max-width: 600px) {
+    table, tbody, tr, td { display: block; width: 100%; box-sizing: border-box; padding: 0; }
+    colgroup { display: none; }
+    .sub-item, .explanation, .total-breakdown-container { margin-bottom: 16px; }
+    .sub-item td { margin-bottom: 6px; padding-right: 0; }
+    .explanation-content { width: 100%; text-align: center; }
+    .section-header.padded td { padding-top: 20px; }
+    .checkbox-item { display: block; margin: 10px 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="table-responsive">
+    <!-- Cases à cocher pour les situations spécifiques -->
+    <div class="checkbox-container">
+      <h3>Situations spécifiques (cochez si applicable) :</h3>
+      <div class="checkbox-item">
+        <input type="checkbox" id="cimm-checkbox" onchange="toggleConditionalRows()">
+        <label for="cimm-checkbox">Reconnaissance CIMM</label>
+      </div>
+      <div class="checkbox-item">
+        <input type="checkbox" id="conjoint-checkbox" onchange="toggleConditionalRows()">
+        <label for="conjoint-checkbox">Rapprochement de conjoints</label>
+      </div>
+      <div class="checkbox-item">
+        <input type="checkbox" id="formateur-checkbox" onchange="toggleConditionalRows()">
+        <label for="formateur-checkbox">Formateur</label>
+      </div>
+    </div>
+
+    <table>
+      <colgroup><col><col><col><col></colgroup>
+      <tbody>
+        <tr class="section-header padded">
+          <td colspan="4">
+            <div class="section-number-block">
+              <div class="section-number">1</div>
+              <div class="section-title">Commun à tous les effectifs :</div>
+            </div>
+          </td>
+        </tr>
+        <tr class="sub-item">
+          <td><label for="input0"><strong class="text-highlight">Nombre de mois d'ancienneté depuis la sortie d'école</strong></label></td>
+          <td class="input-cell"><input type="number" id="input0" min="0" value="0" oninput="calcul()"></td>
+          <td class="result-cell"><span id="result0">0</span></td>
+          <td class="detail-cell">4 pts/mois</td>
+        </tr>
+        <tr class="sub-item">
+          <td><label for="input1"><strong class="text-highlight">Nombre de mois dans le service actuel</strong></label></td>
+          <td class="input-cell"><input type="number" id="input1" min="0" value="0" oninput="calcul()"></td>
+          <td class="result-cell"><span id="result1">0</span></td>
+          <td class="detail-cell">2 pts/mois</td>
+        </tr>
+        <tr class="section-header padded">
+          <td colspan="4">
+            <div class="section-number-block">
+              <div class="section-number">2</div>
+              <div class="section-title">En fonction de l'affectation (ASA, SD, SUEP) :</div>
+            </div>
+          </td>
+        </tr>
+        <tr class="explanation">
+          <td colspan="4">
+            <div class="explanation-content">
+              Attention : Les points SD / SUEP et ASA ne sont pas cumulables entre eux ! L'ASA ne rentre en compte qu'à partir de la 7ᵉ année en continu. Il faudra indiquer 83 mois en SD ou SUEP avant de basculer sur l'ASA si cela s'applique à votre cas.
+            </div>
+          </td>
+        </tr>
+        <tr class="sub-item">
+          <td><label for="input2"><strong class="text-highlight">Nombre de mois en secteur difficile (Prime de fidélisation)</strong></label></td>
+          <td class="input-cell"><input type="number" id="input2" min="0" value="0" oninput="calcul()"></td>
+          <td class="result-cell"><span id="result2">0</span></td>
+          <td class="detail-cell">20 pts/mois</td>
+        </tr>
+        <tr class="sub-item">
+          <td><label for="input3"><strong class="text-highlight">Nombre de mois en secteur SUEP</strong></label></td>
+          <td class="input-cell"><input type="number" id="input3" min="0" value="0" oninput="calcul()"></td>
+          <td class="result-cell"><span id="result3">0</span></td>
+          <td class="detail-cell">20 pts/mois</td>
+        </tr>
+        <tr class="sub-item">
+          <td><label for="input4"><strong class="text-highlight">Nombre de mois en secteur ASA (à partir du 84ᵉ mois)</strong></label></td>
+          <td class="input-cell"><input type="number" id="input4" min="0" value="0" oninput="calcul()"></td>
+          <td class="result-cell"><span id="result4">0</span></td>
+          <td class="detail-cell">25 pts/mois</td>
+        </tr>
+        <tr class="section-header padded">
+          <td colspan="4">
+            <div class="section-number-block">
+              <div class="section-number">3</div>
+              <div class="section-title">Situation individuelle :</div>
+            </div>
+          </td>
+        </tr>
+        
+        <!-- Ligne CIMM (conditionnelle) -->
+        <tr class="sub-item conditional-row" id="cimm-row">
+          <td><label for="input_cimm"><strong class="text-highlight cimm-highlight">Mois depuis la reconnaissance des CIMM</strong></label></td>
+          <td class="input-cell"><input type="number" id="input_cimm" min="0" value="0" oninput="calcul()"></td>
+          <td class="result-cell"><span id="result_cimm">0</span></td>
+          <td class="detail-cell">25 pts/mois</td>
+        </tr>
+        
+        <!-- Ligne Séparation conjoint (conditionnelle) -->
+        <tr class="sub-item conditional-row" id="conjoint-row">
+          <td><label for="input_conjoint"><strong class="text-highlight conjoint-highlight">Mois depuis la séparation du conjoint</strong></label></td>
+          <td class="input-cell"><input type="number" id="input_conjoint" min="0" value="0" oninput="calcul()"></td>
+          <td class="result-cell"><span id="result_conjoint">0</span></td>
+          <td class="detail-cell">25 pts/mois</td>
+        </tr>
+        
+        <!-- Ligne Formateur (conditionnelle) -->
+        <tr class="sub-item conditional-row" id="formateur-row">
+          <td><label for="input_formateur"><strong class="text-highlight formateur-highlight">Années complètes en tant que formateur</strong></label></td>
+          <td class="input-cell"><input type="number" id="input_formateur" min="0" max="4" value="0" oninput="calcul()"></td>
+          <td class="result-cell"><span id="result_formateur">0</span></td>
+          <td class="detail-cell">100 pts/année</td>
+        </tr>
+        <tr class="explanation conditional-row" id="formateur-explanation">
+          <td colspan="4">
+              <div class="explanation-content">
+                  (Dans la limite de 4 années complètes)
+              </div>
+          </td>
+        </tr>
+        
+        <tr class="sub-item">
+          <td><label for="input5"><strong class="text-highlight">Mois depuis nomination grade Brigadier / Chef / Major</strong></label></td>
+          <td class="input-cell"><input type="number" id="input5" min="0" value="0" oninput="calcul()"></td>
+          <td class="result-cell"><span id="result5">0</span></td>
+          <td class="detail-cell">2 pts/mois</td>
+        </tr>
+        <tr class="sub-item">
+          <td><label for="input6"><strong class="text-highlight">Nombre d'enfants à charge</strong></label></td>
+          <td class="input-cell"><input type="number" id="input6" min="0" value="0" oninput="calcul()"></td>
+          <td class="result-cell"><span id="result6">0</span></td>
+          <td class="detail-cell">12 pts/enfant</td>
+        </tr>
+        <tr class="explanation">
+          <td colspan="4">
+              <div class="explanation-content">
+                  (Comptent les enfants handicapés sans limite d'âge, et les -25 ans si preuve de la charge)
+              </div>
+          </td>
+        </tr>
+        <tr class="sub-item">
+          <td><label for="input7"><strong class="text-highlight">Marié / Pacsé / Concubinage / Veuf / Divorcé / Parent isolé</strong></label></td>
+          <td class="input-cell">
+            <select id="input7" onchange="calcul()">
+              <option value="0" selected>Non</option>
+              <option value="1">Oui</option>
+            </select>
+          </td>
+          <td class="result-cell"><span id="result7">0</span></td>
+          <td class="detail-cell">3 pts</td>
+        </tr>
+
+        <tr class="total-detail-row">
+            <td colspan="4">
+                <div id="total-breakdown" class="total-breakdown-container" style="display: none;"></div>
+            </td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="2"></td>
+          <td style="text-align: right; padding-right: 10px;">TOTAL :</td>
+          <td class="result-cell"><span id="totalPoints">0</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="text-align: center; margin-top: 30px;">
+        <button id="reset-btn" class="reset-button">Réinitialiser le calculateur</button>
+    </div>
+  </div>
+
+  <script>
+    // Structure de données pour le calcul
+    const calculRows = [
+      { id: 'input0', coef: 4, label: 'Ancienneté (sortie d\'école)' },
+      { id: 'input1', coef: 2, label: 'Ancienneté (service actuel)' },
+      { id: 'input2', coef: 20, label: 'Secteur difficile' },
+      { id: 'input3', coef: 20, label: 'Secteur SUEP' },
+      { id: 'input4', coef: 25, label: 'Secteur ASA' },
+      { id: 'input5', coef: 2, label: 'Ancienneté (grade)' },
+      { id: 'input6', coef: 12, label: 'Enfants à charge' },
+      { id: 'input7', coef: 3, label: 'Situation familiale' },
+      // Lignes conditionnelles
+      { id: 'input_cimm', coef: 25, label: 'Reconnaissance CIMM', conditional: true },
+      { id: 'input_conjoint', coef: 25, label: 'Séparation du conjoint', conditional: true },
+      { id: 'input_formateur', coef: 100, label: 'Années formateur', conditional: true }
+    ];
+
+    function toggleConditionalRows() {
+      // CIMM
+      const cimmCheckbox = document.getElementById('cimm-checkbox');
+      const cimmRow = document.getElementById('cimm-row');
+      if (cimmCheckbox.checked) {
+        cimmRow.classList.add('show');
+      } else {
+        cimmRow.classList.remove('show');
+        document.getElementById('input_cimm').value = 0;
+      }
+
+      // Conjoint
+      const conjointCheckbox = document.getElementById('conjoint-checkbox');
+      const conjointRow = document.getElementById('conjoint-row');
+      if (conjointCheckbox.checked) {
+        conjointRow.classList.add('show');
+      } else {
+        conjointRow.classList.remove('show');
+        document.getElementById('input_conjoint').value = 0;
+      }
+
+      // Formateur
+      const formateurCheckbox = document.getElementById('formateur-checkbox');
+      const formateurRow = document.getElementById('formateur-row');
+      const formateurExplanation = document.getElementById('formateur-explanation');
+      if (formateurCheckbox.checked) {
+        formateurRow.classList.add('show');
+        formateurExplanation.classList.add('show');
+      } else {
+        formateurRow.classList.remove('show');
+        formateurExplanation.classList.remove('show');
+        document.getElementById('input_formateur').value = 0;
+      }
+
+      calcul();
+    }
+
+    function calcul() {
+      let total = 0;
+      let breakdownHTML = '<h4>Récapitulatif des points :</h4>';
+      let hasPoints = false;
+
+      calculRows.forEach(row => {
+        const inputElement = document.getElementById(row.id);
+        if (inputElement) {
+          // Vérifier si c'est une ligne conditionnelle et si elle est visible
+          if (row.conditional) {
+            const parentRow = inputElement.closest('tr');
+            if (!parentRow || !parentRow.classList.contains('show')) {
+              return; // Ignorer cette ligne si elle n'est pas visible
+            }
+          }
+
+          const val = parseInt(inputElement.value) || 0;
+          const pts = val * row.coef;
+
+          if (pts > 0) {
+              hasPoints = true;
+              breakdownHTML += `<p>${row.label}: <strong>${pts} pts</strong></p>`;
+          }
+          
+          const resultElement = document.getElementById(`result${row.id.replace('input', '')}`);
+          if (resultElement) {
+            resultElement.innerText = pts;
+          }
+          total += pts;
+        }
+      });
+
+      const breakdownContainer = document.getElementById('total-breakdown');
+      if(hasPoints) {
+          breakdownContainer.innerHTML = breakdownHTML;
+          breakdownContainer.style.display = 'block';
+      } else {
+          breakdownContainer.style.display = 'none';
+      }
+      
+      document.getElementById('totalPoints').innerText = total;
+    }
+
+    document.getElementById('reset-btn').addEventListener('click', function() {
+        // Réinitialiser toutes les cases à cocher
+        document.getElementById('cimm-checkbox').checked = false;
+        document.getElementById('conjoint-checkbox').checked = false;
+        document.getElementById('formateur-checkbox').checked = false;
+        
+        // Masquer les lignes conditionnelles
+        toggleConditionalRows();
+        
+        // Réinitialiser tous les champs
+        calculRows.forEach(row => {
+            const inputElement = document.getElementById(row.id);
+            if (inputElement) {
+              if(inputElement.tagName === 'SELECT') {
+                  inputElement.selectedIndex = 0;
+              } else {
+                  inputElement.value = 0;
+              }
+            }
+        });
+        calcul();
+    });
+
+    window.addEventListener('load', function() {
+      toggleConditionalRows();
+      calcul();
+    });
+  </script>
+</body>
+</html>
